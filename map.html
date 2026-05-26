@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>UrbanAR — Stop Map</title>
+
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    body { margin: 0; background: #111; }
+    #map { width: 100vw; height: 100vh; }
+    .legend {
+      position: fixed; bottom: 20px; right: 12px;
+      background: rgba(0,0,0,0.75); color: #fff;
+      padding: 10px 14px; border-radius: 10px;
+      font-size: 13px; z-index: 200; line-height: 1.8;
+      backdrop-filter: blur(6px);
+    }
+    .legend-dot {
+      display: inline-block; width: 12px; height: 12px;
+      border-radius: 50%; margin-right: 6px; vertical-align: middle;
+    }
+  </style>
+</head>
+<body>
+  <a href="index.html" class="map-back">← AR View</a>
+  <div id="map"></div>
+  <div class="legend">
+    <strong>Shelter Designs</strong><br>
+    <span class="legend-dot" style="background:#ffd60a"></span>Solar-Powered<br>
+    <span class="legend-dot" style="background:#30d158"></span>Standard-Plus<br>
+    <span class="legend-dot" style="background:#64d2ff"></span>ADA Enhanced<br>
+    <span class="legend-dot" style="background:#32d74b"></span>Green Roof
+  </div>
+
+  <script src="js/shelter-data.js"></script>
+  <script src="js/sheets-api.js"></script>
+  <script>
+    const designColors = {
+      'solar':        '#ffd60a',
+      'standard':     '#30d158',
+      'ada-enhanced': '#64d2ff',
+      'green-roof':   '#32d74b'
+    };
+
+    const map = L.map('map', { zoomControl: true }).setView([37.762, -122.435], 13);
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      attribution: '© OpenStreetMap, © CartoDB',
+      maxZoom: 19
+    }).addTo(map);
+
+    function makeIcon(color) {
+      return L.divIcon({
+        className: '',
+        html: `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="36" viewBox="0 0 28 36">
+          <path d="M14 0C6.3 0 0 6.3 0 14c0 9.6 14 22 14 22S28 23.6 28 14C28 6.3 21.7 0 14 0z" fill="${color}" stroke="#fff" stroke-width="1.5"/>
+          <circle cx="14" cy="14" r="6" fill="#fff" opacity="0.85"/>
+        </svg>`,
+        iconSize: [28, 36],
+        iconAnchor: [14, 36],
+        popupAnchor: [0, -36]
+      });
+    }
+
+    async function loadShelters() {
+      const shelters = await window.SheetsAPI.getShelters();
+      shelters.forEach(s => {
+        const color = designColors[s.design] || '#fff';
+        const meta  = window.DESIGN_META[s.design] || {};
+        const routes = s.routes.map(r => `<span style="background:${color};color:#000;padding:1px 6px;border-radius:10px;font-size:11px;margin-right:3px;">Muni ${r}</span>`).join('');
+        const priority = ['', '🔴 High', '🟡 Medium', '🟢 Low'][s.priority] || '';
+        const popup = `
+          <div style="font-family:-apple-system,sans-serif;min-width:200px">
+            <strong style="font-size:15px;">${s.name}</strong><br>
+            <div style="margin:4px 0">${routes}</div>
+            <div style="color:#666;font-size:12px;margin:4px 0">${meta.emoji || ''} ${meta.label || s.design} · Priority: ${priority}</div>
+            <p style="font-size:13px;margin:6px 0 0;">${s.description}</p>
+          </div>`;
+        L.marker([s.lat, s.lng], { icon: makeIcon(color) })
+          .addTo(map)
+          .bindPopup(popup);
+      });
+    }
+
+    loadShelters();
+
+    // Show user location
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(pos => {
+        L.circleMarker([pos.coords.latitude, pos.coords.longitude], {
+          radius: 8, color: '#0a84ff', fillColor: '#0a84ff',
+          fillOpacity: 0.8, weight: 2
+        }).addTo(map).bindPopup('📍 Your location');
+      });
+    }
+  </script>
+</body>
+</html>

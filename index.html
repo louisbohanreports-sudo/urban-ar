@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>UrbanAR — Bus Shelter Placement</title>
+
+  <!-- A-Frame -->
+  <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+  <!-- AR.js (includes GPS location-based components) -->
+  <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+  <!-- Look-at component (labels face camera) -->
+  <script src="https://unpkg.com/aframe-look-at-component@0.8.0/dist/aframe-look-at-component.min.js"></script>
+
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body style="margin:0;overflow:hidden;">
+
+  <!-- ── Status Bar ── -->
+  <div id="status-bar">
+    <span id="gps-status">📍 Acquiring GPS…</span>
+    <div class="status-actions">
+      <button id="demo-btn" title="Place demo shelter at your current location">🏗 Demo</button>
+      <a href="map.html" id="map-btn">🗺 Map</a>
+    </div>
+  </div>
+
+  <!-- ── Hint Toast ── -->
+  <div id="hint-toast">Point camera at a bus stop location · Tap shelter to rate</div>
+
+  <!-- ── Rating / Feedback Panel ── -->
+  <div id="rating-panel" class="panel hidden">
+    <div class="panel-handle"></div>
+    <div class="panel-header">
+      <div>
+        <h2 id="stop-name">Bus Stop</h2>
+        <p id="stop-routes" class="stop-routes"></p>
+      </div>
+      <button id="close-panel" aria-label="Close">✕</button>
+    </div>
+    <div class="panel-body">
+      <p id="stop-desc"></p>
+      <div class="stats-row">
+        <span id="avg-rating-display">—</span>
+        <span id="rating-count-display"></span>
+      </div>
+      <div class="rating-prompt">Rate this design:</div>
+      <div class="rating-stars" role="group" aria-label="Star rating">
+        <span class="star" data-value="1" role="button" tabindex="0">★</span>
+        <span class="star" data-value="2" role="button" tabindex="0">★</span>
+        <span class="star" data-value="3" role="button" tabindex="0">★</span>
+        <span class="star" data-value="4" role="button" tabindex="0">★</span>
+        <span class="star" data-value="5" role="button" tabindex="0">★</span>
+      </div>
+      <textarea id="comment-input" placeholder="Optional: share your thoughts on this shelter design…" rows="3"></textarea>
+      <button id="submit-rating">Submit Feedback</button>
+    </div>
+  </div>
+
+  <!-- ── A-Frame AR Scene ── -->
+  <a-scene
+    vr-mode-ui="enabled: false"
+    arjs="sourceType: webcam; videoTexture: true; debugUIEnabled: false; trackingMethod: best"
+    renderer="antialias: true; alpha: true; logarithmicDepthBuffer: true"
+    loading-screen="enabled: false"
+    embedded>
+
+    <a-camera
+      id="ar-camera"
+      gps-camera
+      rotation-reader
+      cursor="fuse: false; rayOrigin: mouse">
+    </a-camera>
+
+    <!-- Dynamic shelter entities injected by app.js -->
+
+  </a-scene>
+
+  <script src="js/shelter-data.js"></script>
+  <script src="js/sheets-api.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
