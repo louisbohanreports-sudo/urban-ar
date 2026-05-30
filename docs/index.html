@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>UrbanAR — Neighborhood Design Prototype</title>
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #1a1a2e;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      font-family: 'Inter', sans-serif;
+    }
+
+    /* Phone frame */
+    .phone-frame {
+      width: 390px;
+      height: 844px;
+      background: #000;
+      border-radius: 54px;
+      padding: 14px;
+      box-shadow: 0 40px 100px rgba(0,0,0,0.5), inset 0 0 0 2px #333;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .phone-screen {
+      width: 100%;
+      height: 100%;
+      background: #f5f5f7;
+      border-radius: 44px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Status bar */
+    .status-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 28px 8px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #1c1c1e;
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+    }
+
+    /* ── Screen 1: Landing ─────────────────────────────── */
+    .screen-landing {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      background: linear-gradient(175deg, #1a1a2e 0%, #16213e 40%, #0f3460 100%);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .landing-bg-grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+      background-size: 32px 32px;
+    }
+
+    .landing-top {
+      padding: 52px 24px 0;
+      position: relative;
+      z-index: 2;
+    }
+
+    .app-wordmark {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.5);
+    }
+
+    .landing-center {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 0 24px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .ai-avatar {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      margin-bottom: 16px;
+      box-shadow: 0 0 30px rgba(102,126,234,0.4);
+    }
+
+    .ai-greeting {
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 20px;
+      border-bottom-left-radius: 4px;
+      padding: 16px 18px;
+      color: white;
+      font-size: 15px;
+      line-height: 1.55;
+      text-align: center;
+      margin-bottom: 24px;
+      max-width: 280px;
+    }
+
+    .chat-input-trigger {
+      width: 100%;
+      max-width: 300px;
+      background: rgba(255,255,255,0.95);
+      border-radius: 24px;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .chat-input-trigger:active { transform: scale(0.97); }
+
+    .chat-input-trigger span {
+      flex: 1;
+      font-size: 15px;
+      color: #8e8e93;
+    }
+
+    .send-icon {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 14px;
+    }
+
+    .landing-actions {
+      display: flex;
+      justify-content: center;
+      gap: 48px;
+      padding: 24px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .action-pill {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: transform 0.15s;
+    }
+    .action-pill:active { transform: scale(0.92); }
+
+    .action-icon-wrap {
+      width: 56px;
+      height: 56px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      backdrop-filter: blur(10px);
+    }
+
+    .action-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.7);
+      letter-spacing: 0.03em;
+    }
+
+    /* ── Screen 2: Chat ─────────────────────────────────── */
+    .screen-chat {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      background: #f5f5f7;
+    }
+
+    .chat-nav {
+      padding: 52px 20px 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(245,245,247,0.9);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(0,0,0,0.06);
+      position: relative;
+      z-index: 10;
+    }
+
+    .back-btn {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.06);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background 0.15s;
+    }
+    .back-btn:active { background: rgba(0,0,0,0.12); }
+
+    .chat-nav-info { flex: 1; }
+    .chat-nav-name { font-size: 15px; font-weight: 700; color: #1c1c1e; }
+    .chat-nav-sub { font-size: 12px; color: #8e8e93; }
+
+    .ai-status-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #34c759; margin-right: 4px; }
+
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 16px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .msg-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+    }
+    .msg-row.user { flex-direction: row-reverse; }
+
+    .msg-avatar {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+
+    .msg-bubble {
+      max-width: 72%;
+      padding: 11px 14px;
+      border-radius: 18px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .msg-bubble.ai {
+      background: white;
+      color: #1c1c1e;
+      border-bottom-left-radius: 4px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+
+    .msg-bubble.user {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      border-bottom-right-radius: 4px;
+    }
+
+    /* Thinking dots */
+    .thinking-dots {
+      display: flex;
+      gap: 5px;
+      padding: 14px 16px;
+      background: white;
+      border-radius: 18px;
+      border-bottom-left-radius: 4px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      width: fit-content;
+    }
+
+    .thinking-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: #c7c7cc;
+      animation: thinking 1.2s ease-in-out infinite;
+    }
+    .thinking-dot:nth-child(2) { animation-delay: 0.2s; }
+    .thinking-dot:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes thinking {
+      0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+      40% { transform: translateY(-6px); opacity: 1; }
+    }
+
+    /* Pre-written options overlay */
+    .options-panel {
+      background: white;
+      border-top: 1px solid rgba(0,0,0,0.08);
+      padding: 12px 16px 24px;
+    }
+
+    .options-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #8e8e93;
+      margin-bottom: 10px;
+    }
+
+    .option-chips {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .option-chip {
+      background: #f2f2f7;
+      border: 1.5px solid transparent;
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 14px;
+      color: #1c1c1e;
+      cursor: pointer;
+      transition: all 0.15s;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .option-chip:hover { border-color: #667eea; background: rgba(102,126,234,0.06); }
+    .option-chip.selected { border-color: #667eea; background: rgba(102,126,234,0.08); }
+
+    .option-chip-icon { font-size: 18px; flex-shrink: 0; }
+
+    /* Action buttons in chat */
+    .chat-action-btns {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .chat-action-btn {
+      flex: 1;
+      padding: 13px;
+      border-radius: 14px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: transform 0.15s, box-shadow 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+    }
+    .chat-action-btn:active { transform: scale(0.96); }
+
+    .btn-generate {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      box-shadow: 0 4px 16px rgba(102,126,234,0.35);
+    }
+
+    .btn-upload {
+      background: #f2f2f7;
+      color: #1c1c1e;
+    }
+
+    /* ── Screen 4: Loading ──────────────────────────────── */
+    .screen-loading {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(175deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      gap: 24px;
+    }
+
+    .loading-ring {
+      width: 80px; height: 80px;
+      border-radius: 50%;
+      border: 3px solid rgba(255,255,255,0.1);
+      border-top-color: #667eea;
+      animation: spin 0.9s linear infinite;
+      position: relative;
+    }
+    .loading-ring::after {
+      content: '🏙️';
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      animation: spin 0.9s linear infinite reverse;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loading-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: white;
+    }
+
+    .loading-sub {
+      font-size: 14px;
+      color: rgba(255,255,255,0.5);
+    }
+
+    .loading-progress {
+      width: 200px;
+      height: 4px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .loading-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #667eea, #764ba2);
+      border-radius: 2px;
+      animation: progress 2.5s ease-in-out forwards;
+    }
+    @keyframes progress { from { width: 0% } to { width: 100% } }
+
+    /* ── Screen 5: Model Gallery ────────────────────────── */
+    .screen-gallery {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      background: #f5f5f7;
+    }
+
+    .gallery-nav {
+      padding: 52px 20px 16px;
+      background: rgba(245,245,247,0.95);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(0,0,0,0.06);
+    }
+
+    .gallery-back {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      color: #667eea;
+      font-size: 15px;
+      font-weight: 500;
+      margin-bottom: 12px;
+    }
+
+    .gallery-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: #1c1c1e;
+    }
+
+    .gallery-sub {
+      font-size: 13px;
+      color: #8e8e93;
+      margin-top: 2px;
+    }
+
+    .gallery-grid {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      align-content: start;
+    }
+
+    .model-card {
+      background: white;
+      border-radius: 16px;
+      overflow: hidden;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      transition: transform 0.15s, box-shadow 0.15s;
+      position: relative;
+    }
+    .model-card:active { transform: scale(0.97); box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+    .model-card.selected-card { outline: 2.5px solid #667eea; }
+
+    .model-thumb {
+      width: 100%;
+      aspect-ratio: 1;
+      object-fit: cover;
+      display: block;
+      background: #e5e5ea;
+    }
+
+    .model-thumb-placeholder {
+      width: 100%;
+      aspect-ratio: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 36px;
+    }
+
+    .model-name {
+      padding: 10px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #1c1c1e;
+    }
+
+    .selected-badge {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #667eea;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+    }
+
+    .gallery-footer {
+      padding: 12px 16px 24px;
+      background: white;
+      border-top: 1px solid rgba(0,0,0,0.06);
+    }
+
+    .select-btn {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      border: none;
+      border-radius: 16px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 20px rgba(102,126,234,0.4);
+      transition: transform 0.15s;
+    }
+    .select-btn:active { transform: scale(0.98); }
+    .select-btn:disabled { opacity: 0.4; }
+
+    /* ── Map Screen (simple placeholder) ───────────────── */
+    .screen-map {
+      height: 100%;
+      background: #e5e5ea;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .map-nav {
+      padding: 52px 20px 14px;
+      background: white;
+      border-bottom: 1px solid rgba(0,0,0,0.06);
+    }
+
+    .map-placeholder {
+      flex: 1;
+      background: #d1d1d6;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .map-grid-overlay {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0,0,0,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+
+    .map-pin {
+      position: absolute;
+      font-size: 24px;
+      transform: translate(-50%, -100%);
+      cursor: pointer;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+    }
+
+    .map-label {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      color: rgba(0,0,0,0.25);
+      font-size: 13px;
+      font-weight: 600;
+      pointer-events: none;
+    }
+
+    /* ── Gallery Screen (saved works) ──────────────────── */
+    .screen-saved {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      background: #f5f5f7;
+    }
+
+    .saved-nav {
+      padding: 52px 20px 16px;
+      background: rgba(245,245,247,0.95);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(0,0,0,0.06);
+    }
+
+    .saved-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: #1c1c1e;
+    }
+
+    .saved-grid {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .saved-item {
+      background: white;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+
+    .saved-thumb {
+      width: 100%;
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+    }
+
+    .saved-info {
+      padding: 10px 12px;
+    }
+
+    .saved-name {
+      font-size: 12px;
+      font-weight: 600;
+      color: #1c1c1e;
+    }
+
+    .saved-loc {
+      font-size: 11px;
+      color: #8e8e93;
+      margin-top: 2px;
+    }
+
+    /* ── Transitions ────────────────────────────────────── */
+    .screen-enter {
+      animation: slideIn 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+    }
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0.6; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    .screen-back {
+      animation: slideBack 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+    }
+    @keyframes slideBack {
+      from { transform: translateX(-30%); opacity: 0.6; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    /* Demo nav outside phone */
+    .demo-nav {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 8px;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(20px);
+      padding: 10px 16px;
+      border-radius: 99px;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .demo-nav-btn {
+      padding: 6px 14px;
+      border-radius: 99px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid rgba(255,255,255,0.2);
+      color: rgba(255,255,255,0.7);
+      background: transparent;
+      transition: all 0.15s;
+    }
+    .demo-nav-btn:hover { background: rgba(255,255,255,0.1); color: white; }
+    .demo-nav-btn.active { background: rgba(102,126,234,0.8); border-color: transparent; color: white; }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+// ── Model data ──────────────────────────────────────────────────────────────
+const MODELS = [
+  { id: 1, name: "Classic Canopy", emoji: "🏛️", color: "#E8F4F8", desc: "Traditional covered shelter" },
+  { id: 2, name: "Modern Glass", emoji: "🔷", color: "#F0F0FF", desc: "Minimalist transparent design" },
+  { id: 3, name: "Green Roof", emoji: "🌿", color: "#F0F8F0", desc: "Living wall integration" },
+  { id: 4, name: "Smart Hub", emoji: "📡", color: "#FFF8F0", desc: "Digital display + charging" },
+];
+
+const PROPOSALS = [
+  { id: 1, text: "Add a covered bus shelter on Mission St at 24th", emoji: "🚌" },
+  { id: 2, text: "Install a bench with shade structure near Dolores Park", emoji: "🌳" },
+];
+
+const FOLLOW_UPS = [
+  { id: 1, text: "Something modern and weather-resistant", emoji: "💡" },
+  { id: 2, text: "A design that fits the neighborhood's style", emoji: "🏘️" },
+];
+
+const SAVED_ITEMS = [
+  { id: 1, name: "Mission St Shelter", loc: "Mission District", emoji: "🚌", color: "#E8F4F8" },
+  { id: 2, name: "Dolores Park Bench", loc: "Mission Dolores", emoji: "🌳", color: "#F0F8F0" },
+  { id: 3, name: "BART Canopy", loc: "Glen Park", emoji: "🏛️", color: "#FFF8F0" },
+  { id: 4, name: "Smart Stop", loc: "Castro", emoji: "📡", color: "#F0F0FF" },
+];
+
+// ── App ─────────────────────────────────────────────────────────────────────
+function App() {
+  const [screen, setScreen] = useState('landing'); // landing | chat | loading | gallery | map | saved
+  const [chatState, setChatState] = useState('initial'); // initial | proposal_selected | thinking1 | awaiting_detail | detail_selected | thinking2 | final
+  const [messages, setMessages] = useState([]);
+  const [selectedProposal, setSelectedProposal] = useState(null);
+  const [selectedFollowUp, setSelectedFollowUp] = useState(null);
+  const [selectedModel, setSelectedModel] = useState(null);
+  const [loadProgress, setLoadProgress] = useState(false);
+  const messagesEnd = useRef(null);
+
+  useEffect(() => {
+    messagesEnd.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, chatState]);
+
+  const goTo = (s) => setScreen(s);
+
+  const openChat = () => {
+    setScreen('chat');
+    setChatState('initial');
+    setMessages([{
+      role: 'ai',
+      text: "Hi! I'm here to help you propose improvements to your neighborhood. What kind of change would you like to see?",
+    }]);
+  };
+
+  const selectProposal = (p) => {
+    setSelectedProposal(p);
+    setMessages(prev => [...prev, { role: 'user', text: p.text }]);
+    setChatState('thinking1');
+    setTimeout(() => {
+      setMessages(prev => [...prev, {
+        role: 'ai',
+        text: `Great idea! A new shelter on ${p.id === 1 ? 'Mission St' : 'Dolores Park'} would really improve the area. What style or features are most important to you?`,
+      }]);
+      setChatState('awaiting_detail');
+    }, 2200);
+  };
+
+  const selectFollowUp = (f) => {
+    setSelectedFollowUp(f);
+    setMessages(prev => [...prev, { role: 'user', text: f.text }]);
+    setChatState('thinking2');
+    setTimeout(() => {
+      setMessages(prev => [...prev, {
+        role: 'ai',
+        text: `Got it! I'll generate some ${f.id === 1 ? 'modern, weather-resistant' : 'neighborhood-appropriate'} designs for your proposal. Ready to see what they could look like?`,
+        hasActions: true,
+      }]);
+      setChatState('final');
+    }, 2200);
+  };
+
+  const startGeneration = () => {
+    setScreen('loading');
+    setLoadProgress(true);
+    setTimeout(() => setScreen('gallery'), 2800);
+  };
+
+  const time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+  // ── Status Bar ─────────────────────────────────────────────────────────────
+  const StatusBar = ({ dark }) => (
+    <div className="status-bar" style={{ color: dark ? 'rgba(255,255,255,0.9)' : '#1c1c1e' }}>
+      <span>{time}</span>
+      <div style={{ display: 'flex', gap: 5, alignItems: 'center', fontSize: 11 }}>
+        <span>●●●</span>
+        <span>WiFi</span>
+        <span>🔋</span>
+      </div>
+    </div>
+  );
+
+  // ── Screen: Landing ─────────────────────────────────────────────────────────
+  if (screen === 'landing') return (
+    <div className="screen-landing screen-back">
+      <StatusBar dark />
+      <div className="landing-bg-grid" />
+      <div className="landing-top">
+        <div className="app-wordmark">UrbanAR</div>
+      </div>
+      <div className="landing-center">
+        <div className="ai-avatar">🏙️</div>
+        <div className="ai-greeting">
+          Hi! I'm here to help you propose improvements to your neighborhood.
+        </div>
+        <div className="chat-input-trigger" onClick={openChat}>
+          <span>Share your idea...</span>
+          <div className="send-icon">↑</div>
+        </div>
+      </div>
+      <div className="landing-actions">
+        <div className="action-pill" onClick={() => goTo('map')}>
+          <div className="action-icon-wrap">🗺️</div>
+          <span className="action-label">Nearby</span>
+        </div>
+        <div className="action-pill" onClick={() => goTo('saved')}>
+          <div className="action-icon-wrap">🖼️</div>
+          <span className="action-label">My Gallery</span>
+        </div>
+      </div>
+    </div>
+  );
+
+  // ── Screen: Chat ────────────────────────────────────────────────────────────
+  if (screen === 'chat') return (
+    <div className="screen-chat screen-enter">
+      <StatusBar />
+      <div className="chat-nav">
+        <div className="back-btn" onClick={() => goTo('landing')}>←</div>
+        <div className="chat-nav-info">
+          <div className="chat-nav-name">UrbanAR Assistant</div>
+          <div className="chat-nav-sub">
+            <span className="ai-status-dot" />
+            Active
+          </div>
+        </div>
+        <div style={{ fontSize: 20 }}>🏙️</div>
+      </div>
+
+      <div className="chat-messages">
+        {messages.map((msg, i) => (
+          <div key={i} className={`msg-row ${msg.role}`}>
+            {msg.role === 'ai' && (
+              <div className="msg-avatar">🏙️</div>
+            )}
+            <div>
+              <div className={`msg-bubble ${msg.role}`}>
+                {msg.text}
+              </div>
+              {msg.hasActions && chatState === 'final' && (
+                <div className="chat-action-btns">
+                  <button className="chat-action-btn btn-generate" onClick={startGeneration}>
+                    ✨ Generate
+                  </button>
+                  <button className="chat-action-btn btn-upload">
+                    📷 Upload
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+
+        {(chatState === 'thinking1' || chatState === 'thinking2') && (
+          <div className="msg-row">
+            <div className="msg-avatar">🏙️</div>
+            <div className="thinking-dots">
+              <div className="thinking-dot" />
+              <div className="thinking-dot" />
+              <div className="thinking-dot" />
+            </div>
+          </div>
+        )}
+        <div ref={messagesEnd} />
+      </div>
+
+      {/* Pre-written options panel */}
+      {chatState === 'initial' && (
+        <div className="options-panel">
+          <div className="options-label">Choose a proposal</div>
+          <div className="option-chips">
+            {PROPOSALS.map(p => (
+              <div key={p.id} className="option-chip" onClick={() => selectProposal(p)}>
+                <span className="option-chip-icon">{p.emoji}</span>
+                {p.text}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {chatState === 'awaiting_detail' && (
+        <div className="options-panel">
+          <div className="options-label">Select your preference</div>
+          <div className="option-chips">
+            {FOLLOW_UPS.map(f => (
+              <div key={f.id} className="option-chip" onClick={() => selectFollowUp(f)}>
+                <span className="option-chip-icon">{f.emoji}</span>
+                {f.text}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {(chatState === 'thinking1' || chatState === 'thinking2' || chatState === 'final') &&
+        chatState !== 'awaiting_detail' && chatState !== 'initial' && chatState !== 'final' && (
+        <div style={{ height: 80 }} />
+      )}
+
+      {chatState === 'final' && (
+        <div style={{ height: 24 }} />
+      )}
+    </div>
+  );
+
+  // ── Screen: Loading ─────────────────────────────────────────────────────────
+  if (screen === 'loading') return (
+    <div className="screen-loading screen-enter">
+      <StatusBar dark />
+      <div className="loading-ring" />
+      <div>
+        <div className="loading-title">Generating Designs</div>
+        <div className="loading-sub" style={{ textAlign: 'center', marginTop: 6 }}>
+          Creating 4 models for your proposal...
+        </div>
+      </div>
+      <div className="loading-progress">
+        <div className="loading-bar" />
+      </div>
+    </div>
+  );
+
+  // ── Screen: Model Gallery ───────────────────────────────────────────────────
+  if (screen === 'gallery') return (
+    <div className="screen-gallery screen-enter">
+      <StatusBar />
+      <div className="gallery-nav">
+        <div className="gallery-back" onClick={() => goTo('chat')}>
+          ← Back
+        </div>
+        <div className="gallery-title">Choose a Design</div>
+        <div className="gallery-sub">Tap to select your preferred model</div>
+      </div>
+
+      <div className="gallery-grid">
+        {MODELS.map(m => (
+          <div
+            key={m.id}
+            className={`model-card ${selectedModel?.id === m.id ? 'selected-card' : ''}`}
+            onClick={() => setSelectedModel(m)}
+          >
+            <div className="model-thumb-placeholder" style={{ background: m.color }}>
+              <span style={{ fontSize: 48 }}>{m.emoji}</span>
+            </div>
+            <div className="model-name">{m.name}</div>
+            {selectedModel?.id === m.id && (
+              <div className="selected-badge">✓</div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      <div className="gallery-footer">
+        <button
+          className="select-btn"
+          disabled={!selectedModel}
+          onClick={() => alert(`"${selectedModel?.name}" selected! In the full app, this would open the AR placement view.`)}
+        >
+          {selectedModel ? `Place "${selectedModel.name}" in AR` : 'Select a design'}
+          {selectedModel && ' →'}
+        </button>
+      </div>
+    </div>
+  );
+
+  // ── Screen: Map ─────────────────────────────────────────────────────────────
+  if (screen === 'map') return (
+    <div className="screen-map screen-enter">
+      <StatusBar />
+      <div className="map-nav">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div className="back-btn" onClick={() => goTo('landing')}>←</div>
+          <div>
+            <div style={{ fontSize: 17, fontWeight: 700, color: '#1c1c1e' }}>Nearby Proposals</div>
+            <div style={{ fontSize: 12, color: '#8e8e93' }}>San Francisco, CA</div>
+          </div>
+        </div>
+      </div>
+      <div className="map-placeholder">
+        <div className="map-grid-overlay" />
+        <div className="map-pin" style={{ top: '35%', left: '45%' }}>📍</div>
+        <div className="map-pin" style={{ top: '55%', left: '30%' }}>📍</div>
+        <div className="map-pin" style={{ top: '45%', left: '62%' }}>📍</div>
+        <div className="map-pin" style={{ top: '65%', left: '50%' }}>📍</div>
+        <div className="map-label">
+          🗺️<br/>Interactive map<br/>coming soon
+        </div>
+      </div>
+    </div>
+  );
+
+  // ── Screen: Saved Gallery ───────────────────────────────────────────────────
+  if (screen === 'saved') return (
+    <div className="screen-saved screen-enter">
+      <StatusBar />
+      <div className="saved-nav">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+          <div className="back-btn" onClick={() => goTo('landing')}>←</div>
+        </div>
+        <div className="saved-title">My Gallery</div>
+        <div style={{ fontSize: 13, color: '#8e8e93', marginTop: 2 }}>4 designs saved</div>
+      </div>
+      <div className="saved-grid">
+        {SAVED_ITEMS.map(s => (
+          <div key={s.id} className="saved-item">
+            <div className="saved-thumb" style={{ background: s.color }}>
+              {s.emoji}
+            </div>
+            <div className="saved-info">
+              <div className="saved-name">{s.name}</div>
+              <div className="saved-loc">📍 {s.loc}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <div>
+    <div className="phone-frame">
+      <div className="phone-screen">
+        <App />
+      </div>
+    </div>
+    <div style={{
+      position: 'fixed', bottom: 16, left: '50%', transform: 'translateX(-50%)',
+      color: 'rgba(255,255,255,0.35)', fontSize: 12, textAlign: 'center'
+    }}>
+      UrbanAR Prototype v2 · Tap through each screen
+    </div>
+  </div>
+);
+</script>
+</body>
+</html>
